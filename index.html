@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mystery Materials — Phase 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0b0f1a;
+      --surface: #131927;
+      --surface-2: #1a2236;
+      --border: #253049;
+      --text: #e4e8f1;
+      --text-dim: #7a8ba8;
+      --accent: #6c5ce7;
+      --accent-glow: rgba(108, 92, 231, 0.35);
+      --gold: #f0c040;
+      --gold-glow: rgba(240, 192, 64, 0.3);
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --radius: 14px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .header-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    .header h1 {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header p {
+      margin-top: 8px;
+      color: var(--text-dim);
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .team-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      padding: 8px 20px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--gold);
+    }
+    .team-label .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+
+    /* ---- Instruction ---- */
+    .instruction {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 28px;
+    }
+    .instruction span {
+      color: var(--gold);
+    }
+
+    /* ---- Box Grid ---- */
+    .box-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .mystery-box {
+      position: relative;
+      aspect-ratio: 1 / 1.15;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+      user-select: none;
+      overflow: hidden;
+    }
+    .mystery-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .mystery-box:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-3px);
+    }
+    .mystery-box.selected {
+      border-color: var(--gold);
+      background: linear-gradient(160deg, rgba(240,192,64,0.08), var(--surface));
+      box-shadow: 0 0 24px var(--gold-glow);
+      transform: translateY(-4px) scale(1.03);
+    }
+    .mystery-box.revealed {
+      border-color: var(--success);
+      background: linear-gradient(160deg, rgba(46,204,113,0.1), var(--surface));
+      box-shadow: 0 0 24px rgba(46,204,113,0.25);
+      cursor: default;
+    }
+    .mystery-box.revealed:hover {
+      transform: none;
+      box-shadow: 0 0 24px rgba(46,204,113,0.25);
+    }
+    .mystery-box.locked {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .box-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+    .box-question {
+      font-size: 32px;
+      line-height: 1;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .mystery-box.selected .box-question { opacity: 0.3; }
+    .box-icon-check {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    .mystery-box.selected .box-icon-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .box-material {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: all 0.4s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+    .mystery-box.revealed .box-material {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .mystery-box.revealed .box-number,
+    .mystery-box.revealed .box-question,
+    .mystery-box.revealed .box-icon-check {
+      display: none;
+    }
+    .box-material .mat-icon { font-size: 28px; }
+    .box-material .mat-name {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--success);
+      text-align: center;
+      line-height: 1.3;
+      padding: 0 6px;
+    }
+
+    /* ---- Status Bar ---- */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+    .counter strong {
+      color: var(--gold);
+      font-size: 18px;
+    }
+    .toast {
+      font-size: 13px;
+      color: var(--danger);
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s;
+      height: 18px;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #8b7cf7);
+      color: #fff;
+      box-shadow: 0 4px 18px var(--accent-glow);
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 6px 28px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+    .btn-primary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #f5d060);
+      color: var(--bg);
+      box-shadow: 0 4px 18px var(--gold-glow);
+    }
+    .btn-gold:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px var(--gold-glow);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--text); }
+    .btn-sm { padding: 8px 18px; font-size: 12px; }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .corner-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ---- Result Screen ---- */
+    .result-screen {
+      display: none;
+    }
+    .result-screen.visible { display: block; }
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .result-card h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .result-card .subtitle {
+      color: var(--text-dim);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .material-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .material-tag {
+      padding: 12px 22px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--success);
+      animation: tagIn 0.35s cubic-bezier(.4,0,.2,1) both;
+    }
+    .material-tag:nth-child(1) { animation-delay: 0.05s; }
+    .material-tag:nth-child(2) { animation-delay: 0.1s; }
+    .material-tag:nth-child(3) { animation-delay: 0.15s; }
+    .material-tag:nth-child(4) { animation-delay: 0.2s; }
+    .material-tag:nth-child(5) { animation-delay: 0.25s; }
+
+    @keyframes tagIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.9); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .result-note {
+      color: var(--text-dim);
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    /* ---- Coordinator Modal ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .modal h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: var(--gold);
+    }
+    .coord-block {
+      margin-bottom: 18px;
+    }
+    .coord-block h4 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .coord-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .coord-row .label { color: var(--text-dim); min-width: 70px; }
+    .coord-row .val   { color: var(--text); }
+    .coord-row .val.green { color: var(--success); }
+    .coord-row .check { color: var(--gold); font-weight: 700; }
+    .coord-close {
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 600px) {
+      .header h1 { font-size: 28px; }
+      .box-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
+      .box-question { font-size: 26px; }
+      .material-tag { padding: 10px 14px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-badge">College Event Prototype</div>
+      <h1>MYSTERY MATERIALS</h1>
+      <p>PHASE 1 — MYSTERY BOX SELECTION</p>
+      <div class="team-label"><span class="dot"></span><span id="teamName">TEAM 01</span></div>
+    </div>
+
+    <!-- Game Area -->
+    <div id="gameArea">
+      <div class="instruction">Select exactly <span>5 of the 7</span> mystery boxes.</div>
+
+      <div class="box-grid" id="boxGrid"></div>
+
+      <div class="status-bar">
+        <div class="counter">SELECTED: <strong id="selCount">0</strong> / 5</div>
+        <div class="toast" id="toast">You can select only 5 boxes.</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="revealBtn" disabled>Reveal Materials</button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div class="result-screen" id="resultScreen">
+      <div class="result-card">
+        <h2 id="resultTeam">TEAM 01</h2>
+        <div class="subtitle">Materials Received</div>
+        <div class="material-list" id="materialList"></div>
+        <div class="result-note">These are your team's available materials.</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" id="nextTeamBtn">Next Team</button>
+      </div>
+    </div>
+
+    <!-- Corner Actions -->
+    <div class="corner-actions">
+      <button class="btn btn-outline btn-sm" id="coordBtn">Coordinator View</button>
+      <button class="btn btn-outline btn-sm" id="resetBtn">Reset Demo</button>
+    </div>
+  </div>
+
+  <!-- Coordinator Modal -->
+  <div class="modal-overlay" id="coordOverlay">
+    <div class="modal">
+      <h3>Coordinator View</h3>
+      <div class="coord-block">
+        <h4>Current Team</h4>
+        <div class="coord-row"><span class="label">Team</span><span class="val" id="coordTeam">TEAM 01</span></div>
+      </div>
+      <div class="coord-block">
+        <h4>Hidden Box Mapping</h4>
+        <div id="coordMapping"></div>
+      </div>
+      <div class="coord-block">
+        <h4>Selected Boxes</h4>
+        <div id="coordSelected"></div>
+      </div>
+      <div class="coord-block">
+        <h4>Materials Received</h4>
+        <div id="coordMaterials"></div>
+      </div>
+      <button class="btn btn-outline coord-close" id="coordClose">Back to Participant View</button>
+    </div>
+  </div>
+
+  <script>
+    /* ---- DATA ---- */
+    const MATERIALS = [
+      'Cardboard',
+      'Ice-cream sticks',
+      'Thread',
+      'Rubber bands',
+      'Newspaper',
+      'Paper tape',
+      'Thermocol'
+    ];
+
+    /* ---- STATE ---- */
+    let state = createFreshState();
+
+    function createFreshState() {
+      return {
+        teamNumber: 1,
+        boxMapping: shuffle([...MATERIALS]),
+        selected: [],
+        revealed: false
+      };
+    }
+
+    /* ---- Fisher-Yates Shuffle ---- */
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    /* ---- DOM REFS ---- */
+    const $boxGrid      = document.getElementById('boxGrid');
+    const $selCount      = document.getElementById('selCount');
+    const $toast         = document.getElementById('toast');
+    const $revealBtn     = document.getElementById('revealBtn');
+    const $teamName      = document.getElementById('teamName');
+    const $gameArea      = document.getElementById('gameArea');
+    const $resultScreen  = document.getElementById('resultScreen');
+    const $resultTeam    = document.getElementById('resultTeam');
+    const $materialList  = document.getElementById('materialList');
+    const $nextTeamBtn   = document.getElementById('nextTeamBtn');
+    const $coordBtn      = document.getElementById('coordBtn');
+    const $resetBtn      = document.getElementById('resetBtn');
+    const $coordOverlay  = document.getElementById('coordOverlay');
+    const $coordClose    = document.getElementById('coordClose');
+
+    /* ---- RENDER ---- */
+    function render() {
+      $teamName.textContent = `TEAM ${state.teamNumber < 10 ? '0' + state.teamNumber : state.teamNumber}`;
+      $selCount.textContent = state.selected.length;
+      $revealBtn.disabled = state.selected.length !== 5;
+      $toast.classList.remove('show');
+
+      $boxGrid.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const idx = i + 1;
+        const isSel = state.selected.includes(idx);
+        const isRev = state.revealed && isSel;
+        const isUnselectedHidden = state.revealed && !isSel;
+
+        const el = document.createElement('div');
+        el.className = 'mystery-box';
+        if (isSel) el.classList.add('selected');
+        if (isRev) el.classList.add('revealed');
+        if (isUnselectedHidden) el.classList.add('locked');
+
+        el.innerHTML = `
+          <span class="box-number">BOX ${idx}</span>
+          <span class="box-question">?</span>
+          <span class="box-icon-check">&#10003;</span>
+          <span class="box-material">
+            <span class="mat-name">${state.boxMapping[i]}</span>
+          </span>
+        `;
+
+        if (!state.revealed && !isUnselectedHidden) {
+          el.addEventListener('click', () => handleClick(idx));
+        }
+        $boxGrid.appendChild(el);
+      }
+
+      // Switch screens
+      if (state.revealed) {
+        $gameArea.style.display = 'none';
+        $resultScreen.classList.add('visible');
+        $resultTeam.textContent = $teamName.textContent;
+        $materialList.innerHTML = '';
+        state.selected.sort((a, b) => a - b).forEach(boxIdx => {
+          const mat = state.boxMapping[boxIdx - 1];
+          const tag = document.createElement('div');
+          tag.className = 'material-tag';
+          tag.textContent = mat;
+          $materialList.appendChild(tag);
+        });
+      } else {
+        $gameArea.style.display = 'block';
+        $resultScreen.classList.remove('visible');
+      }
+    }
+
+    function handleClick(boxIdx) {
+      if (state.revealed) return;
+      if (state.selected.includes(boxIdx)) {
+        state.selected = state.selected.filter(b => b !== boxIdx);
+        render();
+        return;
+      }
+      if (state.selected.length >= 5) {
+        $toast.classList.add('show');
+        setTimeout(() => $toast.classList.remove('show'), 1800);
+        return;
+      }
+      state.selected.push(boxIdx);
+      render();
+    }
+
+    /* ---- ACTIONS ---- */
+    $revealBtn.addEventListener('click', () => {
+      if (state.selected.length === 5) {
+        state.revealed = true;
+        render();
+      }
+    });
+
+    $nextTeamBtn.addEventListener('click', () => {
+      state.teamNumber++;
+      state.boxMapping = shuffle([...MATERIALS]);
+      state.selected = [];
+      state.revealed = false;
+      render();
+    });
+
+    $resetBtn.addEventListener('click', () => {
+      state = createFreshState();
+      render();
+    });
+
+    /* ---- COORDINATOR ---- */
+    $coordBtn.addEventListener('click', () => {
+      populateCoordinator();
+      $coordOverlay.classList.add('open');
+    });
+    $coordClose.addEventListener('click', () => {
+      $coordOverlay.classList.remove('open');
+    });
+    $coordOverlay.addEventListener('click', (e) => {
+      if (e.target === $coordOverlay) $coordOverlay.classList.remove('open');
+    });
+
+    function populateCoordinator() {
+      const tn = `TEAM ${state.teamNumber < 10 ? '0' + state.teamNumber : state.teamNumber}`;
+      document.getElementById('coordTeam').textContent = tn;
+
+      const mappingEl = document.getElementById('coordMapping');
+      mappingEl.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const row = document.createElement('div');
+        row.className = 'coord-row';
+        row.innerHTML = `<span class="label">Box ${i + 1}</span><span>→</span><span class="val green">${state.boxMapping[i]}</span>`;
+        mappingEl.appendChild(row);
+      }
+
+      const selEl = document.getElementById('coordSelected');
+      selEl.innerHTML = '';
+      if (state.selected.length === 0) {
+        selEl.innerHTML = '<div class="coord-row"><span class="val" style="opacity:.5">No boxes selected yet</span></div>';
+      } else {
+        state.selected.sort((a, b) => a - b).forEach(bx => {
+          const row = document.createElement('div');
+          row.className = 'coord-row';
+          row.innerHTML = `<span class="label">Box ${bx}</span><span class="check">&#10003;</span>`;
+          selEl.appendChild(row);
+        });
+      }
+
+      const matEl = document.getElementById('coordMaterials');
+      matEl.innerHTML = '';
+      if (!state.revealed) {
+        matEl.innerHTML = '<div class="coord-row"><span class="val" style="opacity:.5">Not yet revealed</span></div>';
+      } else {
+        state.selected.sort((a, b) => a - b).forEach(bx => {
+          const row = document.createElement('div');
+          row.className = 'coord-row';
+          row.innerHTML = `<span class="val green">${state.boxMapping[bx - 1]}</span>`;
+          matEl.appendChild(row);
+        });
+      }
+    }
+
+    /* ---- INIT ---- */
+    render();
+  </script>
+</body>
+</html>
